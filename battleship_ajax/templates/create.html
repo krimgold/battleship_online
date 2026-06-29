@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Battleship</title>
+	<style>
+		body {
+			margin: 0;
+			font-family: sans-serif;
+			text-align: center;
+			padding: 70px 20px 50px 20px;
+			background-color: #eceff1;
+		}
+
+		.input-group {
+			text-align: left;
+			width: 85%;
+			margin: 0 auto 20px auto;
+		}
+
+		label {
+			display: block;
+			font-size: 14px;
+			font-weight: bold;
+			color: #546e7a;
+			margin-bottom: 6px;
+		}
+
+		input[type="text"] {
+			padding: 12px;
+			font-size: 24px;
+			width: 100%;
+			box-sizing: border-box;
+			text-align: center;
+			text-transform: uppercase;
+			letter-spacing: 5px;
+			border: 2px solid #b0bec5;
+			border-radius: 4px;
+			transition: border-color 0.3s;
+
+			input[type="text"]:focus {
+				border-color: #00acc1;
+				outline: none;
+			}
+		}
+
+			.top-bar {
+				background-color: #333;
+				overflow: hidden;
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+				display: flex;
+				justify-content: left;
+			}
+
+				.top-bar a {
+					display: block;
+					color: white;
+					padding: 14px 20px;
+					text-decoration: none;
+					font-size: 16px;
+				}
+
+					.top-bar a:hover {
+						background-color: #ddd;
+						color: black;
+					}
+
+			.create-container {
+				background: white;
+				padding: 40px 60px;
+				border-radius: 8px;
+				box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+				max-width: 350px;
+				margin: 0 auto;
+				border-top: 6px solid #00acc1;
+				text-align: center;
+			}
+
+			h2 {
+				margin-top: 0;
+				color: #263238;
+			}
+
+			p {
+				color: #546e7a;
+				margin-bottom: 25px;
+			}
+
+			button {
+				padding: 14px 24px;
+				font-size: 16px;
+				font-weight: bold;
+				background-color: #00acc1;
+				color: white;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				width: 100%;
+				transition: background-color 0.3s;
+			}
+
+				button:hover {
+					background-color: #00838f;
+				}
+
+			.error {
+				color: #d32f2f;
+				margin-top: 15px;
+				font-size: 14px;
+			}
+	</style>
+</head>
+<body>
+
+	<div class="top-bar">
+		<a href="/">Home</a>
+		<a href="/play">Play</a>
+		<a href="/create">Create</a>
+	</div>
+
+	<div class="create-container">
+		<h2>Create a game</h2>
+		<p>Enter player codes</p>
+
+		<form method="POST" action="/new">
+			<div class="input-group">
+				<label for="player1code">Player 1 Code</label>
+				<input type="text" id="player1code" name="p1_code" required autocomplete="off">
+			</div>
+
+			<div class="input-group">
+				<label for="player2code">Player 2 Code</label>
+				<input type="text" id="player2code" name="p2_code" required autocomplete="off">
+			</div>
+
+			<button type="submit">Create Game</button>
+		</form>
+	</div>
+
+	<script>
+		const inputs = document.querySelectorAll('#player1code, #player2code');
+		inputs.forEach(input => {
+			input.addEventListener('input', function() {
+				this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+			});
+		});
+	</script>
+
+</body>
+</html>

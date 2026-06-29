@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Battleship</title>
+	<style>
+		body {
+			margin: 0;
+			font-family: Arial, sans-serif;
+			background-color: #f4f4f9;
+			color: #333;
+		}
+
+		.top-bar {
+			background-color: #333;
+			overflow: hidden;
+			position: fixed;
+			top: 0;
+			width: 100%;
+			box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+		}
+
+			.top-bar a {
+				float: left;
+				display: block;
+				color: white;
+				text-align: center;
+				padding: 14px 20px;
+				text-decoration: none;
+				font-size: 16px;
+			}
+
+				.top-bar a:hover {
+					background-color: #ddd;
+					color: black;
+				}
+
+		.content {
+			padding: 20px;
+			margin-top: 60px;
+			text-align: center;
+		}
+
+		h1 {
+			color: #222;
+			font-size: 2.5rem;
+			margin-top: 20px;
+		}
+
+		.page-image {
+			max-width: 100%;
+			height: auto;
+			border-radius: 8px;
+			margin: 20px auto;
+			display: block;
+		}
+	</style>
+</head>
+<body>
+
+	<div class="top-bar">
+		<a href="/">Home</a>
+		<a href="/play">Play</a>
+		<a href="/create">Create</a>
+	</div>
+
+	<div class="content">
+		<h1>Battleship</h1>
+		<img src="{{ url_for('static', filename='ships.png') }}" class="page-image" />
+		<p>Play Battleship game with your friends!</p>
+	</div>
+
+</body>
+</html>

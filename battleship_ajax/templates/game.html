@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Battleship</title>
+	<style>
+		body {
+			font-family: sans-serif;
+			text-align: center;
+			background: #eceff1;
+		}
+
+		.game-container {
+			display: flex;
+			justify-content: center;
+			gap: 50px;
+			margin-top: 30px;
+		}
+
+		.board {
+			display: grid;
+			grid-template-columns: repeat(10, 35px);
+			gap: 2px;
+		}
+
+		.cell {
+			width: 35px;
+			height: 35px;
+			background-color: #e0f7fa;
+			border: 1px solid #00acc1;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-weight: bold;
+		}
+
+		.my-board .cell.ship {
+			background-color: #546e7a;
+		}
+
+		.cell.miss {
+			background-color: #b0bec5;
+		}
+
+			.cell.miss::after {
+				content: "•";
+				color: #37474f;
+			}
+
+		.cell.hit {
+			background-color: #ef5350;
+			color: white;
+		}
+
+			.cell.hit::after {
+				content: "X";
+			}
+
+		.enemy-board .cell {
+			cursor: pointer;
+		}
+
+			.enemy-board .cell:hover {
+				background-color: #b2ebf2;
+			}
+	</style>
+</head>
+<body>
+
+	<h1>Battleship Game</h1>
+	<h3>Your Code: {{ player_code }} | Opponent Code: {{ opponent_code }}</h3>
+	<h2 id="statusMessage">Click on the Enemy Radar to fire!</h2>
+
+	<div class="game-container">
+		<div>
+			<h3>Your Fleet</h3>
+			<div class="board my-board">
+				{% for row in 'abcdefghij'|list %}
+				{% for col in range(1, 11) %}
+				{% set key = row ~ col %}
+				{% set status = my_board[key] %}
+				<div id="my-{{ key }}" class="cell {% if status == 1 %}ship{% elif status == 2 %}miss{% elif status == 3 %}hit{% endif %}"></div>
+				{% endfor %}
+				{% endfor %}
+			</div>
+		</div>
+
+		<div>
+			<h3>Enemy Radar</h3>
+			<div class="board enemy-board">
+				{% for row in 'abcdefghij'|list %}
+				{% for col in range(1, 11) %}
+				{% set key = row ~ col %}
+				{% set status = tracking_board[key] %}
+				<div id="enemy-{{ key }}" class="cell {% if status == 2 %}miss{% elif status == 3 %}hit{% endif %}"
+					 data-cell="{{ key }}" onclick="fireShot(this)">
+				</div>
+				{% endfor %}
+				{% endfor %}
+			</div>
+		</div>
+	</div>
+
+	<script>
+		let gameOverDeclared = false;
+		let pollInterval;
+
+		function checkGameState() {
+			fetch(`/state?id={{ player_code }}`)
+				.then(res => res.json())
+				.then(data => {
+					if (data.my_board) {
+						Object.entries(data.my_board).forEach(([key, status]) => {
+							const cell = document.getElementById(`my-${key}`);
+							if (cell) {
+								cell.className = 'cell';
+								if (status === 1) cell.classList.add('ship');
+								else if (status === 2) cell.classList.add('miss');
+								else if (status === 3) cell.classList.add('hit');
+							}
+						});
+					}
+
+					if (data.tracking_board) {
+						Object.entries(data.tracking_board).forEach(([key, status]) => {
+							const cell = document.getElementById(`enemy-${key}`);
+							if (cell) {
+								cell.className = 'cell';
+								if (status === 2) cell.classList.add('miss');
+								else if (status === 3) cell.classList.add('hit');
+							}
+						});
+					}
+
+					if (data.winner && !gameOverDeclared) {
+						gameOverDeclared = true;
+						clearInterval(pollInterval);
+
+						if (data.winner === 'you') {
+							document.getElementById('statusMessage').innerHTML =
+								`<strong style="color: #2e7d32; font-size: 28px;">YOU WIN!</strong><br>
+					 <button onclick="window.location.href='/cleanup?id={{ player_code }}'" style="margin-top:10px; padding:8px 16px; font-weight:bold; cursor:pointer;">Return to Main Menu</button>`;
+						} else if (data.winner === 'opponent') {
+							document.getElementById('statusMessage').innerHTML =
+								`<strong style="color: #c62828; font-size: 28px;">DEFEAT! All your ships sank.</strong><br>
+					 <button onclick="window.location.href='/cleanup?id={{ player_code }}'" style="margin-top:10px; padding:8px 16px; font-weight:bold; cursor:pointer;">Return to Main Menu</button>`;
+						}
+					}
+				})
+				.catch(err => console.error("Error fetching state:", err));
+		}
+
+		checkGameState();
+		pollInterval = setInterval(checkGameState, 2000);
+
+		function fireShot(element) {
+			const cellKey = element.dataset.cell;
+			if (element.classList.contains('hit') || element.classList.contains('miss') || gameOverDeclared) return;
+
+			fetch('/fire', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					player_code: "{{ player_code }}",
+					cell: cellKey
+				})
+			})
+				.then(res => res.json())
+				.then(data => {
+					if (data.success) {
+						if (!gameOverDeclared) {
+							if (data.result === 'hit') {
+								document.getElementById('statusMessage').innerText = "Direct Hit!";
+							} else {
+								document.getElementById('statusMessage').innerText = "Splash! You missed.";
+							}
+						}
+						checkGameState();
+					} else {
+						alert(data.message);
+					}
+				});
+		}
+	</script>
+</body>
+</html>

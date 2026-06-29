@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battleship</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #eceff1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #263238;
+        }
+
+        .waiting-container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            border-top: 6px solid #00acc1;
+        }
+
+        h1 {
+            margin-top: 0;
+            color: #212121;
+            font-size: 24px;
+        }
+
+        p {
+            color: #546e7a;
+            font-size: 16px;
+            line-height: 1.5;
+            margin-bottom: 30px;
+        }
+
+        .code-badge {
+            background-color: #e0f7fa;
+            color: #00838f;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .radar-wrapper {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 25px auto;
+            background: #37474f;
+            border-radius: 50%;
+            border: 3px solid #00acc1;
+            overflow: hidden;
+        }
+
+        .radar-sweep {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: conic-gradient(from 0deg, transparent 70%, rgba(0, 172, 193, 0.4) 100%);
+            border-radius: 50%;
+            animation: sweep 2s linear infinite;
+        }
+
+        .radar-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px dashed rgba(0, 172, 193, 0.3);
+            border-radius: 50%;
+        }
+
+        .circle-1 {
+            width: 40px;
+            height: 40px;
+        }
+
+        .circle-2 {
+            width: 80px;
+            height: 80px;
+        }
+
+        @keyframes sweep {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="waiting-container">
+        <div class="radar-wrapper">
+            <div class="radar-sweep"></div>
+            <div class="radar-circle circle-1"></div>
+            <div class="radar-circle circle-2"></div>
+        </div>
+        <h1>Assembling Fleet Arena...</h1>
+        <p>Your waters are locked down and ships are in position.</p>
+        <p>Waiting for Player <span class="code-badge">{{ opp_code }}</span> to place their ships.</p>
+    </div>
+
+    <script>
+        let pollInterval;
+
+        function checkOpponentStatus() {
+            fetch('/state?id={{ player_code }}')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.opp_ready) {
+                        clearInterval(pollInterval);
+                        window.location.reload();
+                    }
+                })
+                .catch(err => console.error("Error checking opponent status:", err));
+        }
+
+        checkOpponentStatus();
+        pollInterval = setInterval(checkOpponentStatus, 2000);
+    </script>
+</body>
+</html>

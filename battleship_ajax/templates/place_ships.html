@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battleship</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            gap: 2px;
+            justify-content: center;
+            margin: 20px auto;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            background-color: #e0f7fa;
+            border: 1px solid #00acc1;
+            cursor: pointer;
+        }
+
+            .cell:hover {
+                background-color: #b2ebf2;
+            }
+
+            .cell.occupied {
+                background-color: #546e7a;
+                border-color: #37474f;
+                cursor: not-allowed;
+            }
+
+        .controls {
+            margin-bottom: 20px;
+        }
+
+        button, select {
+            padding: 10px;
+            font-size: 16px;
+            margin: 5px;
+        }
+
+        .error {
+            color: red;
+            height: 20px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Place Ships</h1>
+
+    <div class="controls">
+        <select id="shipSelect">
+            <option value="carrier" data-length="5">Carrier (5 cells)</option>
+            <option value="battleship" data-length="4">Battleship (4 cells)</option>
+            <option value="cruiser" data-length="3">Cruiser (3 cells)</option>
+            <option value="submarine" data-length="3">Submarine (3 cells)</option>
+            <option value="destroyer" data-length="2">Destroyer (2 cells)</option>
+        </select>
+
+        <select id="orientation">
+            <option value="horizontal">Horizontal</option>
+            <option value="vertical">Vertical</option>
+        </select>
+    </div>
+
+    <div id="errorMessage" class="error"></div>
+
+    <div id="board" class="board"></div>
+
+    <form id="shipForm" method="POST" action="/game?id={{ game_code }}">
+        <input type="hidden" name="board_data" id="boardData">
+
+        <button type="button" id="resetBtn">Reset Board</button>
+        <button type="submit" id="submitBtn" disabled>Submit</button>
+    </form>
+
+    <script>
+        const boardSize = 10;
+        const boardEl = document.getElementById('board');
+        const shipSelect = document.getElementById('shipSelect');
+        const orientationSelect = document.getElementById('orientation');
+        const boardDataInput = document.getElementById('boardData');
+        const submitBtn = document.getElementById('submitBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const errorMsg = document.getElementById('errorMessage');
+
+        let grid = Array(boardSize).fill(null).map(() => Array(boardSize).fill(0));
+
+        function getCellKey(row, col) {
+            const rowLetter = String.fromCharCode(97 + row);
+            const colNumber = col + 1;
+            return `${rowLetter}${colNumber}`;
+        }
+
+        function updateBoardPayload() {
+            let payload = {};
+            for (let row = 0; row < boardSize; row++) {
+                for (let col = 0; col < boardSize; col++) {
+                    const cellKey = getCellKey(row, col);
+                    payload[cellKey] = grid[row][col];
+                }
+            }
+            boardDataInput.value = JSON.stringify(payload);
+        }
+
+        for (let row = 0; row < boardSize; row++) {
+            for (let col = 0; col < boardSize; col++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.row = row;
+                cell.dataset.col = col;
+                cell.addEventListener('click', () => placeShip(row, col));
+                boardEl.appendChild(cell);
+            }
+        }
+        updateBoardPayload();
+
+        function placeShip(startRow, startCol) {
+            if (shipSelect.options.length === 0) return;
+
+            const selectedOption = shipSelect.options[shipSelect.selectedIndex];
+            const length = parseInt(selectedOption.dataset.length);
+            const isHorizontal = orientationSelect.value === 'horizontal';
+
+            if (isHorizontal && startCol + length > boardSize) {
+                showError("Ship goes off the board horizontally!");
+                return;
+            }
+            if (!isHorizontal && startRow + length > boardSize) {
+                showError("Ship goes off the board vertically!");
+                return;
+            }
+
+            let cellsToOccupy = [];
+            for (let i = 0; i < length; i++) {
+                let r = isHorizontal ? startRow : startRow + i;
+                let c = isHorizontal ? startCol + i : startCol;
+
+                if (grid[r][c] === 1) {
+                    showError("Overlaps with another ship!");
+                    return;
+                }
+
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        if (dr === 0 && dc === 0) continue;
+
+                        let nr = r + dr;
+                        let nc = c + dc;
+
+                        if (nr >= 0 && nr < boardSize && nc >= 0 && nc < boardSize) {
+                            if (grid[nr][nc] === 1) {
+                                showError("Ships cannot be placed directly next to each other!");
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                cellsToOccupy.push({row: r, col: c});
+            }
+
+            errorMsg.innerText = "";
+            cellsToOccupy.forEach(coord => {
+                grid[coord.row][coord.col] = 1;
+                let domCell = document.querySelector(`.cell[data-row='${coord.row}'][data-col='${coord.col}']`);
+                domCell.classList.add('occupied');
+            });
+
+            shipSelect.remove(shipSelect.selectedIndex);
+
+            updateBoardPayload();
+
+            if (shipSelect.options.length === 0) {
+                submitBtn.disabled = false;
+                shipSelect.disabled = true;
+                orientationSelect.disabled = true;
+            }
+        }
+
+        function showError(msg) {
+            errorMsg.innerText = msg;
+            setTimeout(() => errorMsg.innerText = "", 2500);
+        }
+
+        resetBtn.addEventListener('click', () => {
+            location.reload();
+        });
+    </script>
+</body>
+</html>
